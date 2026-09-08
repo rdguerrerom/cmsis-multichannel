@@ -53,16 +53,16 @@ between sessions, so only ratios measured within a run are meaningful.
 
 | numStages | CMSIS | batched | | max_abs_diff |
 |--:|--:|--:|--:|--:|
-| 4 | 7.24 | 0.73 | 9.8× | `0.0e+00` |
-| 8 | 8.98 | 1.21 | 7.3× | `0.0e+00` |
-| 16 | 13.48 | 2.24 | 5.7× | `0.0e+00` |
-| 32 | 24.92 | 4.15 | 5.2× | `0.0e+00` |
+| 4 | 11.85 | 1.31 | 9.0x | `0.0e+00` |
+| 8 | 14.54 | 2.09 | 6.9x | `0.0e+00` |
+| 16 | 20.88 | 3.88 | 5.3x | `0.0e+00` |
+| 32 | 39.67 | 8.28 | 4.7x | `0.0e+00` |
 
-At 32 channels, 16 stages, blockSize 32: **3.1×**.
+At 32 channels, 16 stages, blockSize 32: **3.0x**.
 
-`arm_fir_lattice_f32`, 64 channels, 16 stages: **4.9×**, `0.0e+00`.
+`arm_fir_lattice_f32`, 64 channels, 16 stages: **4.5x**, `0.0e+00`.
 
-**`arm_fir_f32`, 8 channels, 32 taps: 0.50× — half the speed.** A FIR output is
+**`arm_fir_f32`, 8 channels, 32 taps: 0.49x — half the speed.** A FIR output is
 an independent dot product over taps, so its parallelism is already reachable
 within one channel and the existing NEON path exploits it. The technique also
 loses below roughly 8 channels on every kernel here.
