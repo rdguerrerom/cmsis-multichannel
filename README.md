@@ -95,3 +95,42 @@ uses 8.6% more.
   tradeoff may differ.
 * f32 only. Q15/Q31 are untested.
 * The benchmarks are single-threaded and measure steady-state block processing.
+
+## arm_biquad_cascade_df2T_f32 (see ARM-software/CMSIS-DSP#231)
+
+The Neon path for this kernel is disabled in the shipped library
+(`arm_biquad_cascade_df2T_f32.c:187`, `#if 0`). Three harnesses here:
+
+* `bench_df2T_neon_vs_scalar.c` — what the disabled Neon path is worth,
+  single channel. Re-enable it by replacing `#if 0 //defined(ARM_MATH_NEON)`
+  with `#if defined(ARM_MATH_NEON)` in a copy of the source.
+* `check_df2T_neon_equivalence.c` — does the re-enabled Neon path agree with
+  the scalar one? Sweeps numStages, blockSize and uses **distinct** per-stage
+  coefficients, since identical stages would mask an index error in the
+  cascade-gain products `arm_biquad_cascade_df2T_compute_coefs_f32` builds.
+* `bench_biquad_df2T_multichannel.c` — the multi-channel comparison.
+
+Measured on Apple M5, Homebrew clang, f32, CMSIS-DSP `c0c8640`.
+
+**The disabled Neon path, single channel, vs scalar** (ns/sample, min of 9):
+
+| stages | block | scalar | Neon | |
+|--:|--:|--:|--:|--:|
+| 2 | 128 | 3.58 | 6.19 | 0.58x |
+| 4 | 128 | 5.53 | 7.16 | 0.77x |
+| 4 | 512 | 7.98 | 7.57 | 1.05x |
+| 8 | 512 | 14.89 | 14.00 | 1.06x |
+
+**Multi-channel**, against the scalar version given its own preferred
+channel-major layout (no transpose charged to it):
+
+| channels | stages | block | current | batched | |
+|--:|--:|--:|--:|--:|--:|
+| 32 | 4 | 32 | 2.81 | 1.47 | 1.9x |
+| 32 | 4 | 128 | 4.03 | 1.40 | 2.8x |
+| 64 | 2 | 64 | 2.06 | 0.53 | 3.8x |
+| 128 | 4 | 128 | 4.03 | 1.65 | 2.4x |
+
+Portable C, no intrinsics. Agreement with the scalar output ~4.5e-07, i.e. f32
+rounding. State is 2 floats per stage per channel either way, so the footprint
+is identical. Below about 8 channels the batched form loses.
